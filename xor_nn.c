@@ -6,12 +6,15 @@
 #include "more_math.h"
 
 static const int num_inputs = 2;
-static const int num_hidden = 2;
+static const int num_hidden = 8;
 static const int num_outputs = 1;
 static const int EPOCHS = 10000;
 static const double LR = 0.1;
+static const int num_training = 28;
+static const int NUMBER_OF_TESTS = 100000;
 
-double cost(double expected_output, double predicted_output)
+double
+cost(double expected_output, double predicted_output)
 {
     return 0.5 * pow((expected_output - predicted_output), 2);
 }
@@ -42,43 +45,187 @@ double predict(double i1, double i2, Matrix *hw, Matrix *hb, Matrix *ow, Matrix 
     return predicted_output;
 }
 
+/*
+    The fuzzy-XOR function is expected to behave in the following manner. Given
+    inputs between 0.0 and 1.0, we assume everything below 0.5 is 0 and everything
+    equal to or above 0.5 as 1. Then, the expected output is the same as the
+    conventional XOR understanding.(0,0)->0, (0,1)->1, (1,0)->1, (1,1)->0. This
+    function returns the average error across the total number of tests.
+*/
+void random_test(Matrix *hw, Matrix *hb, Matrix *ow, Matrix *ob, bool verbose)
+{
+    int correct_predictions = 0;
+    double total_error = 0.0;
+    for (int trial = 0; trial < NUMBER_OF_TESTS; trial++)
+    {
+        double i1 = rand_weight();
+        double i2 = rand_weight();
+
+        double expected = i1 + i2;
+
+        if ((i1 < 0.5 && i2 < 0.5) || (i1 > 0.5 && i2 > 0.5))
+        {
+            expected = 0.0;
+        }
+        else
+        {
+            expected = 1.0;
+        }
+
+        double predicted_result = predict(i1, i2, hw, hb, ow, ob);
+
+        total_error += 0.5 * pow((expected - predicted_result), 2);
+
+        double rounded_predicted = -1.0;
+
+        if (predicted_result < 0.5)
+        {
+            rounded_predicted = 0.0;
+        }
+        else
+        {
+            rounded_predicted = 1.0;
+        }
+
+        if (double_equals(expected, rounded_predicted))
+        {
+            correct_predictions++;
+        }
+        else
+        {
+            if (verbose)
+            {
+                printf("XOR of (%f, %f) (Expected: %d): %f\n", i1, i2, ((int)(expected)), predicted_result);
+            }
+        }
+    }
+
+    double accuracy = ((double)(correct_predictions)) / ((double)(NUMBER_OF_TESTS));
+    printf("Passed %d out of %d tests. (Accuracy = %f)\n", correct_predictions, NUMBER_OF_TESTS, accuracy);
+    printf("Total error over %d random tests: %f\n", NUMBER_OF_TESTS, total_error);
+    printf("Average error per trial: %f\n", total_error / ((double)(NUMBER_OF_TESTS)));
+}
+
 int main()
 {
     srand(time(NULL));
+    clock_t start, end;
+    double cpu_time_used;
+    start = clock();
 
     //Initializing training sets
     Matrix training_inputs;
-    m_init(&training_inputs, 4, 2);
+    m_init(&training_inputs, num_training, 2);
     m_set(&training_inputs, 1, 1, 1.0);
     m_set(&training_inputs, 2, 0, 1.0);
     m_set(&training_inputs, 3, 0, 1.0);
     m_set(&training_inputs, 3, 1, 1.0);
 
+    m_set(&training_inputs, 4, 0, 0.2);
+    m_set(&training_inputs, 4, 1, 0.2);
+    m_set(&training_inputs, 5, 0, 0.2);
+    m_set(&training_inputs, 5, 1, 0.8);
+    m_set(&training_inputs, 6, 0, 0.8);
+    m_set(&training_inputs, 6, 1, 0.2);
+    m_set(&training_inputs, 7, 0, 0.8);
+    m_set(&training_inputs, 7, 1, 0.8);
+
+    m_set(&training_inputs, 8, 0, 0.4);
+    m_set(&training_inputs, 8, 1, 0.4);
+    m_set(&training_inputs, 9, 0, 0.4);
+    m_set(&training_inputs, 9, 1, 0.6);
+    m_set(&training_inputs, 10, 0, 0.6);
+    m_set(&training_inputs, 10, 1, 0.4);
+    m_set(&training_inputs, 11, 0, 0.6);
+    m_set(&training_inputs, 11, 1, 0.6);
+
+    m_set(&training_inputs, 12, 0, 0.1);
+    m_set(&training_inputs, 12, 1, 0.1);
+    m_set(&training_inputs, 13, 0, 0.1);
+    m_set(&training_inputs, 13, 1, 0.9);
+    m_set(&training_inputs, 14, 0, 0.9);
+    m_set(&training_inputs, 14, 1, 0.1);
+    m_set(&training_inputs, 15, 0, 0.9);
+    m_set(&training_inputs, 15, 1, 0.9);
+
+    m_set(&training_inputs, 16, 0, 0.3);
+    m_set(&training_inputs, 16, 1, 0.3);
+    m_set(&training_inputs, 17, 0, 0.3);
+    m_set(&training_inputs, 17, 1, 0.7);
+    m_set(&training_inputs, 18, 0, 0.7);
+    m_set(&training_inputs, 18, 1, 0.3);
+    m_set(&training_inputs, 19, 0, 0.7);
+    m_set(&training_inputs, 19, 1, 0.7);
+
+    m_set(&training_inputs, 20, 0, 0.45);
+    m_set(&training_inputs, 20, 1, 0.45);
+    m_set(&training_inputs, 21, 0, 0.45);
+    m_set(&training_inputs, 21, 1, 0.55);
+    m_set(&training_inputs, 22, 0, 0.55);
+    m_set(&training_inputs, 22, 1, 0.45);
+    m_set(&training_inputs, 23, 0, 0.55);
+    m_set(&training_inputs, 23, 1, 0.55);
+
+    m_set(&training_inputs, 24, 0, 0.49);
+    m_set(&training_inputs, 24, 1, 0.49);
+    m_set(&training_inputs, 25, 0, 0.49);
+    m_set(&training_inputs, 25, 1, 0.51);
+    m_set(&training_inputs, 26, 0, 0.51);
+    m_set(&training_inputs, 26, 1, 0.49);
+    m_set(&training_inputs, 27, 0, 0.51);
+    m_set(&training_inputs, 27, 1, 0.51);
+
     Matrix training_outputs;
-    m_init(&training_outputs, 4, 1);
+    m_init(&training_outputs, num_training, 1);
     m_set(&training_outputs, 1, 0, 1.0);
     m_set(&training_outputs, 2, 0, 1.0);
+    m_set(&training_outputs, 5, 0, 1.0);
+    m_set(&training_outputs, 6, 0, 1.0);
+    m_set(&training_outputs, 9, 0, 1.0);
+    m_set(&training_outputs, 10, 0, 1.0);
+    m_set(&training_outputs, 13, 0, 1.0);
+    m_set(&training_outputs, 14, 0, 1.0);
+    m_set(&training_outputs, 17, 0, 1.0);
+    m_set(&training_outputs, 18, 0, 1.0);
+    m_set(&training_outputs, 21, 0, 1.0);
+    m_set(&training_outputs, 22, 0, 1.0);
+    m_set(&training_outputs, 25, 0, 1.0);
+    m_set(&training_outputs, 26, 0, 1.0);
+    // m_set(&training_outputs, 3, 0, 1.0);
 
     Matrix hidden_weights;
     m_init(&hidden_weights, num_inputs, num_hidden);
-    m_set(&hidden_weights, 0, 0, 0.1);
-    m_set(&hidden_weights, 0, 1, 0.2);
-    m_set(&hidden_weights, 1, 0, 0.3);
-    m_set(&hidden_weights, 1, 1, 0.4);
+    for (int i = 0; i < (&hidden_weights)->rows; i++)
+    {
+        for (int j = 0; j < (&hidden_weights)->cols; j++)
+        {
+            m_set(&hidden_weights, i, j, rand_weight());
+        }
+    }
 
     Matrix hidden_bias;
     m_init(&hidden_bias, 1, num_hidden);
-    m_set(&hidden_bias, 0, 0, 0.5);
-    m_set(&hidden_bias, 0, 1, 0.6);
+    for (int i = 0; i < (&hidden_bias)->rows; i++)
+    {
+        for (int j = 0; j < (&hidden_bias)->cols; j++)
+        {
+            m_set(&hidden_bias, i, j, rand_weight());
+        }
+    }
 
     Matrix output_weights;
     m_init(&output_weights, num_hidden, num_outputs);
-    m_set(&output_weights, 0, 0, 0.1);
-    m_set(&output_weights, 1, 0, 0.2);
+    for (int i = 0; i < (&output_weights)->rows; i++)
+    {
+        for (int j = 0; j < (&output_weights)->cols; j++)
+        {
+            m_set(&output_weights, i, j, rand_weight());
+        }
+    }
 
     Matrix output_bias;
     m_init(&output_bias, 1, num_outputs);
-    m_set(&output_bias, 0, 0, 0.3);
+    m_set(&output_bias, 0, 0, rand_weight());
 
     //Iterate through epochs
     for (int n = 0; n < EPOCHS; n++)
@@ -130,7 +277,6 @@ int main()
         m_map(&douth_dinh, d_sigmoid);
 
         Matrix derr_dinh;
-        //Some weird behavior with this one...
         m_copy(&error_hidden_layer, &derr_dinh);
         m_hadamard(&derr_dinh, &douth_dinh);
 
@@ -184,42 +330,44 @@ int main()
         m_free_memory(&d_hidden_bias);
     }
 
-    printf("\n========== FLAG ==========\n");
+    printf("\n========== Final Weights and Biases ==========\n");
+    printf("Hidden Weights\n");
     m_full_print(&hidden_weights);
+    printf("Hidden Biases\n");
     m_full_print(&hidden_bias);
+    printf("Output Weights\n");
     m_full_print(&output_weights);
+    printf("Output Biases\n");
     m_full_print(&output_bias);
-
-    Matrix test_hw;
-    m_init(&test_hw, 2, 2);
-    m_set(&test_hw, 0, 0, 3.1382);
-    m_set(&test_hw, 0, 1, 5.4453);
-    m_set(&test_hw, 1, 0, 3.1573);
-    m_set(&test_hw, 1, 1, 5.5619);
-    Matrix test_hb;
-    m_init(&test_hb, 1, 2);
-    m_set(&test_hb, 0, 0, -4.7832);
-    m_set(&test_hb, 0, 1, -2.1433);
-    Matrix test_ow;
-    m_init(&test_ow, 2, 1);
-    m_set(&test_ow, 0, 0, -7.0657);
-    m_set(&test_ow, 1, 0, 6.5386);
-    Matrix test_ob;
-    m_init(&test_ob, 1, 1);
-    m_set(&test_ob, 0, 0, -2.8911);
-
+    printf("\n========== Predictions on input data ==========\n");
     printf("Prediction for (0, 0) (Expected: 0): %f\n", predict(0.0, 0.0, &hidden_weights, &hidden_bias, &output_weights, &output_bias));
     printf("Prediction for (0, 1) (Expected: 1): %f\n", predict(0.0, 1.0, &hidden_weights, &hidden_bias, &output_weights, &output_bias));
     printf("Prediction for (1, 0) (Expected: 1): %f\n", predict(1.0, 0.0, &hidden_weights, &hidden_bias, &output_weights, &output_bias));
     printf("Prediction for (1, 1) (Expected: 0): %f\n", predict(1.0, 1.0, &hidden_weights, &hidden_bias, &output_weights, &output_bias));
+    printf("\n");
 
     printf("Prediction for (0.2, 0.2) (Expected: 0): %f\n", predict(0.2, 0.2, &hidden_weights, &hidden_bias, &output_weights, &output_bias));
     printf("Prediction for (0.2, 0.8) (Expected: 1): %f\n", predict(0.2, 0.8, &hidden_weights, &hidden_bias, &output_weights, &output_bias));
     printf("Prediction for (0.8, 0.2) (Expected: 1): %f\n", predict(0.8, 0.2, &hidden_weights, &hidden_bias, &output_weights, &output_bias));
     printf("Prediction for (0.8, 0.8) (Expected: 0): %f\n", predict(0.8, 0.8, &hidden_weights, &hidden_bias, &output_weights, &output_bias));
-    //TEST Already Trained Parameters
-    // printf("Prediction for (0, 0) (Expected: 0): %f\n", predict(0.0, 0.0, &test_hw, &test_hb, &test_ow, &test_ob));
-    // printf("Prediction for (0, 1) (Expected: 1): %f\n", predict(0.0, 1.0, &test_hw, &test_hb, &test_ow, &test_ob));
-    // printf("Prediction for (1, 0) (Expected: 1): %f\n", predict(1.0, 0.0, &test_hw, &test_hb, &test_ow, &test_ob));
-    // printf("Prediction for (1, 1) (Expected: 0): %f\n", predict(1.0, 1.0, &test_hw, &test_hb, &test_ow, &test_ob));
+    printf("\n");
+    printf("Prediction for (0.3, 0.3) (Expected: 0): %f\n", predict(0.3, 0.3, &hidden_weights, &hidden_bias, &output_weights, &output_bias));
+    printf("Prediction for (0.3, 0.7) (Expected: 1): %f\n", predict(0.3, 0.7, &hidden_weights, &hidden_bias, &output_weights, &output_bias));
+    printf("Prediction for (0.7, 0.3) (Expected: 1): %f\n", predict(0.7, 0.3, &hidden_weights, &hidden_bias, &output_weights, &output_bias));
+    printf("Prediction for (0.7, 0.7) (Expected: 0): %f\n", predict(0.7, 0.7, &hidden_weights, &hidden_bias, &output_weights, &output_bias));
+    printf("\n");
+    printf("Prediction for (0.4, 0.4) (Expected: 0): %f\n", predict(0.4, 0.4, &hidden_weights, &hidden_bias, &output_weights, &output_bias));
+    printf("Prediction for (0.4, 0.6) (Expected: 1): %f\n", predict(0.4, 0.6, &hidden_weights, &hidden_bias, &output_weights, &output_bias));
+    printf("Prediction for (0.6, 0.4) (Expected: 1): %f\n", predict(0.6, 0.4, &hidden_weights, &hidden_bias, &output_weights, &output_bias));
+    printf("Prediction for (0.6, 0.6) (Expected: 0): %f\n", predict(0.6, 0.6, &hidden_weights, &hidden_bias, &output_weights, &output_bias));
+    printf("\n");
+    printf("\n========== Predictions on random data ==========\n");
+
+    random_test(&hidden_weights, &hidden_bias, &output_weights, &output_bias, false);
+
+    printf("\n");
+    printf("xor_nn.py has finished.\n");
+    end = clock();
+    cpu_time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
+    printf("Completed in %f seconds. \n", cpu_time_used);
 }
