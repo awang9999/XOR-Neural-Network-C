@@ -52,7 +52,7 @@ Matrix *m_set(Matrix *a, int r, int c, double val)
 
 Matrix *m_map_row(Matrix *a, int r, double (*f)(double))
 {
-    if (r >= a->rows)
+    if (r >= a->rows || r < 0)
     {
         printf("Cannot map over row %d: index out of bounds", r);
         m_print(a);
@@ -67,7 +67,7 @@ Matrix *m_map_row(Matrix *a, int r, double (*f)(double))
 }
 Matrix *m_map_col(Matrix *a, int c, double (*f)(double))
 {
-    if (c >= a->cols)
+    if (c >= a->cols || c < 0)
     {
         printf("Cannot map over column %d: index out of bounds", c);
         m_print(a);
@@ -131,22 +131,37 @@ Matrix *m_add(Matrix *a, Matrix *b)
 
 Matrix *m_subtract(Matrix *a, Matrix *b)
 {
-    if (a->rows != b->rows || a->cols != b->cols)
+    if (a->rows == b->rows && a->cols == b->cols)
+    {
+        for (int i = 0; i < a->rows; i++)
+        {
+            for (int j = 0; j < b->cols; j++)
+            {
+                double x = m_get(a, i, j) - m_get(b, i, j);
+                m_set(a, i, j, x);
+            }
+        }
+        return a;
+    }
+    else if (a->cols == b->cols && b->rows == 1)
+    {
+        for (int i = 0; i < a->rows; i++)
+        {
+            for (int j = 0; j < b->cols; j++)
+            {
+                double x = m_get(a, i, j) - m_get(b, 0, j);
+                m_set(a, i, j, x);
+            }
+        }
+        return a;
+    }
+    else
     {
         printf("Cannot subtract matrices: Mismatched dimensions.\n");
         m_full_print(a);
         m_full_print(b);
         exit(1);
     }
-    for (int i = 0; i < a->rows; i++)
-    {
-        for (int j = 0; j < a->cols; j++)
-        {
-            double x = m_get(a, i, j) - m_get(b, i, j);
-            m_set(a, i, j, x);
-        }
-    }
-    return a;
 }
 
 Matrix *m_hadamard(Matrix *a, Matrix *b)
@@ -295,35 +310,39 @@ Matrix *m_colsum(Matrix *a, Matrix *dest)
 
 void m_print(Matrix *a)
 {
+    printf("[");
     for (int i = 0; i < a->rows; i++)
     {
-        printf("|");
-        for (int j = 0; j < a->cols; j++)
+        if (i > 0)
         {
-            printf(" %.4f ", m_get(a, i, j));
+            printf(" [");
         }
-        printf("|\n");
-    }
-}
+        else
+        {
+            printf("[");
+        }
 
-void m_full_print(Matrix *a)
-{
-    printf("Size: %d rows by %d columns\n", a->rows, a->cols);
-    printf("___|");
-    for (int i = 0; i < a->cols; i++)
-    {
-        printf("__[%d]___", i);
-    }
-    printf("_\n");
-    for (int i = 0; i < a->rows; i++)
-    {
-        printf("[%d]|", i);
         for (int j = 0; j < a->cols; j++)
         {
             printf(" %f ", m_get(a, i, j));
         }
-        printf("\n");
+
+        if (i == (a->rows) - 1)
+        {
+            printf("]");
+        }
+        else
+        {
+            printf("]\n");
+        }
     }
+    printf("]\n");
+}
+
+void m_full_print(Matrix *a)
+{
+    printf("Size: (%d, %d)\n", a->rows, a->cols);
+    m_print(a);
 }
 
 bool m_equals(Matrix *a, Matrix *b)

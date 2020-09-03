@@ -13,8 +13,7 @@ static const double LR = 0.1;
 static const int num_training = 28;
 static const int NUMBER_OF_TESTS = 100000;
 
-double
-cost(double expected_output, double predicted_output)
+double cost(double expected_output, double predicted_output)
 {
     return 0.5 * pow((expected_output - predicted_output), 2);
 }
